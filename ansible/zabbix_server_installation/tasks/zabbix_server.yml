@@ -1,0 +1,14 @@
+---
+
+- name:
+  shell: |
+    rpm -qai | grep zabbix
+    if [[ $? != 0 ]]; then
+      yum install -y http://repo.zabbix.com/zabbix/3.4/rhel/7/x86_64/zabbix-release-3.4-1.el7.centos.noarch.rpm
+    fi
+
+- name: zabbix Installation
+  yum:
+    name:  
+      - zabbix-get
+      - zabbix-agent

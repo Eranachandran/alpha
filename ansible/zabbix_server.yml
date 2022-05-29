@@ -1,0 +1,16 @@
+---
+
+#- hosts: all
+#  roles:
+#    - { role: apache_php }
+#  become: true
+
+#- hosts: all
+#  roles:
+#    - { role: mysql_installation }
+#  become: true
+
+- hosts: all
+  roles:
+    - { role: zabbix_server_installation }
+  become: true

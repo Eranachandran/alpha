@@ -1,0 +1,84 @@
+---
+- name: Install php packages
+  yum:
+    name:
+      - php
+      - php-mysqlnd
+      - php-ldap 
+      - php-bcmath 
+      - php-mbstring 
+      - php-gd
+      - php-xml
+
+- name: disabling php version expose
+  ini_file:
+    path: /etc/php.ini
+    section: PHP
+    option: expose_php
+    value: off
+    backup: yes
+
+- name: post max size for zabbix 
+  ini_file:
+    path: /etc/php.ini
+    section: PHP
+    option: post_max_size 
+    value: 16M
+    backup: yes
+
+- name: upload_max_filesize  for zabbix
+  ini_file:
+    path: /etc/php.ini
+    section: PHP
+    option: upload_max_filesize    
+    value: 2M                
+    backup: yes 
+
+- name: max_execution_time for zabbix
+  ini_file:
+    path: /etc/php.ini
+    section: PHP
+    option: max_execution_time      
+    value: 300
+
+- name: max_input_time  for zabbix
+  ini_file:
+    path: /etc/php.ini
+    section: PHP
+    option: max_input_time       
+    value: 300               
+    
+- name: session.auto_start for zabbix
+  ini_file:
+    path: /etc/php.ini
+    section: PHP
+    option: session.auto_start     
+    value: 0                
+  
+- name: mbstring.func_overload for zabbix
+  ini_file:
+    path: /etc/php.ini
+    section: PHP
+    option: mbstring.func_overload  
+    value: 0
+   
+- name: date.timezone for zabbix
+  ini_file:
+    path: /etc/php.ini
+    section: PHP
+    option: date.timezone 
+    value: Asia/Kolkata       
+
+- name: memory_limit  for zabbix
+  ini_file:
+    path: /etc/php.ini
+    section: PHP
+    option: 128M
+    value: Asia/Kolkata
+
+- name: httpd restart
+  systemd:
+    name: httpd
+    enabled: yes
+    state: restarted
+

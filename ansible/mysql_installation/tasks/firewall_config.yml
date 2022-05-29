@@ -1,0 +1,11 @@
+---
+
+- name: "Check the installed packages using package facts"
+  package_facts:
+    manager: "auto"
+  no_log: true
+
+- name: enabling custom port for mysqldb in selinux
+  shell: |
+    semanage port -a -t mysqld_port_t -p tcp {{ mysql_port }}
+  ignore_errors: True

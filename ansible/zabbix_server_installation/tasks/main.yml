@@ -1,0 +1,7 @@
+---
+# tasks file for zabbix_server_installation
+
+- name: zabbix_server_install
+  include: zabbix_server.yml
+  when:
+    - ansible_os_family == 'RedHat' and ansible_distribution_major_version == '7'

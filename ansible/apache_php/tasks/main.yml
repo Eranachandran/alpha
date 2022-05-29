@@ -1,0 +1,17 @@
+---
+# tasks file for apache_php
+
+- name: httpd install
+  include: centos_httpd.yml
+  when: 
+    - ansible_os_family == 'RedHat' and ansible_distribution_major_version == '7'
+
+- name: apache hardening steps
+  include: centos_apache_hardening.yml
+  when: 
+    - ansible_os_family == 'RedHat' and ansible_distribution_major_version == '7'
+
+- name: php install
+  include: centos_php.yml
+  when: 
+    - ansible_os_family == 'RedHat' and ansible_distribution_major_version == '7'

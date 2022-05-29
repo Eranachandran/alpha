@@ -1,0 +1,23 @@
+---
+
+- name: Inserting hardening steps
+  blockinfile: 
+    path: /etc/httpd/conf/httpd.conf
+    block: |
+      #####Apache Hardening Configuration#############
+      ServerSignature Off
+      ServerTokens Prod
+      #Disable the TRACE HTTP Method	
+      TraceEnable off	
+      #Prevent ClickJacking	
+      Header always append X-Frame-Options SAMEORIGIN
+      <Directory /var/www/html> 
+         Options -Indexes 
+         LimitRequestBody 10000000
+      </Directory>
+      <Directory /var/www/html>
+        RedirectMatch 404 /\.git 
+        RedirectMatch 404 /README\.txt 
+        RedirectMatch 404 /\.properties 
+      </Directory>
+      #####Apache Hardening Configuration#############

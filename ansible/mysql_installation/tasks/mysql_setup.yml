@@ -1,0 +1,131 @@
+
+---
+
+- name: Enable repo
+  shell: |
+    rpm -qa | grep mysql80-community-release
+    if [[ $? != 0 ]]; then
+      rpm -Uvh https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm
+    fi
+- name: Mysql Installation
+  yum:
+    name: mysql-server
+
+- name: Restart mysql
+  systemd:
+    name: mysqld
+    enabled: true
+    state: restarted
+  become: yes
+
+- name: change mysql port
+  lineinfile:
+    path: /etc/my.cnf
+    line: 'port={{ mysql_port }}'
+
+- name: Changing my.cnf
+  ini_file:
+    path: /etc/my.cnf
+    section: mysqld
+    option: bind-address
+    value: 127.0.0.1
+
+- name: Changing my.cnf for max-connections
+  ini_file:
+    path: /etc/my.cnf
+    section: mysqld
+    option: max_connections
+    value: 4096
+
+- name: Changing my.cnf native auth
+  ini_file:
+    path: /etc/my.cnf
+    section: mysqld
+    option: default-authentication-plugin
+    value: mysql_native_password
+
+- name: Restart mysql
+  systemd:
+    name: mysqld
+    enabled: true
+    state: restarted
+  become: yes
+
+- name: grep temporary password
+  shell: "grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log | awk '{print $NF}'"
+  register: temporary_password
+  no_log: true
+
+- name: changing temporary password
+  command: mysql --user root --password='{{ temporary_password.stdout }}' --port={{ mysql_port }} -h localhost --connect-expired-password --execute="ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_db_root_password }}';"
+  ignore_errors: True
+  no_log: true
+
+- name: changing root user name
+  command: mysql --user root --password={{ mysql_db_root_password }} --port={{ mysql_port }} -h localhost --execute="use mysql;UPDATE user set user = '{{ mysql_root_user }}' WHERE user = 'root';"
+  ignore_errors: True
+  no_log: true
+
+- name: Restart mysql
+  systemd:
+    name: mysqld
+    enabled: true
+    state: restarted
+  become: yes
+
+- name: Reload privilege tables
+  command: 'mysql -u {{ mysql_root_user }} -p{{ mysql_db_root_password }} --port={{ mysql_port }} -h localhost -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+  changed_when: False
+  no_log: true
+
+- name: Remove anonymous users
+  command: 'mysql -u {{ mysql_root_user }} -p{{ mysql_db_root_password }} --port={{ mysql_port }} -h localhost -ne "{{ item }}"'
+  with_items:
+    - DELETE FROM mysql.user WHERE User=''
+  changed_when: False
+  no_log: true
+
+- name: Remove test database and access to it
+  command: 'mysql -u {{ mysql_root_user }} -p{{ mysql_db_root_password }} --port={{ mysql_port }} -h localhost -ne "{{ item }}"'
+  with_items:
+    - DROP DATABASE test
+    - DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'
+  changed_when: False
+  ignore_errors: True
+  no_log: true
+
+- name: Reload privilege tables
+  command: 'mysql -u {{ mysql_root_user }} -p{{ mysql_db_root_password }} --port={{ mysql_port }} -h localhost -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+  changed_when: False
+  no_log: true
+
+- name: create zabbix database
+  command: 'mysql -u {{ mysql_root_user }} -p{{ mysql_db_root_password }} --port={{ mysql_port }} -h localhost -ne "{{ item }}"'
+  with_items:
+    - create database zabbixdb character set utf8 collate utf8_bin
+    - CREATE USER '{{ zabbix_user }}'@'%' IDENTIFIED BY '{{ zabbix_password }}'
+    - GRANT ALL PRIVILEGES ON zabbixdb.* TO '{{ zabbix_user }}'@'%' WITH GRANT OPTION
+    - flush privileges
+  changed_when: False
+#  no_log: true
+
+- name: adding restart on-failure in mysql config
+  ini_file:
+    path: /usr/lib/systemd/system/mysqld.service
+    section: Service
+    option: Restart
+    value: on-failure
+
+- name: daemon-load
+  systemd:
+    daemon_reload: yes
+
+- name: Restart mysql
+  systemd:
+    name: mysqld
+    enabled: true
+    state: restarted

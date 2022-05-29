@@ -1,0 +1,28 @@
+---
+
+- name: Installing httpd
+  yum:
+    name: httpd
+    state: present
+
+- name: Removing default httpd page
+  file:
+    path: '/etc/httpd/conf.d/welcome.conf'
+    state: absent
+
+- name: adding restart on-failure in httpd config
+  ini_file:
+    path: /usr/lib/systemd/system/httpd.service
+    section: Service
+    option: Restart
+    value: on-failure
+
+- name: daemon-load
+  systemd:
+    daemon_reload: yes
+
+- name: httpd restart
+  systemd:
+    name: httpd
+    enabled: yes
+    state: restarted
